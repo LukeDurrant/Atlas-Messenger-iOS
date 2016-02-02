@@ -97,7 +97,11 @@ NSString *const ATLMAtlasUserNameKey = @"name";
     NSString *appUUID = [[self.layerClient.appID pathComponents] lastObject];
     NSString *urlString = [NSString stringWithFormat:@"apps/%@/atlas_identities", appUUID];
     NSURL *URL = [NSURL URLWithString:urlString relativeToURL:self.baseURL];
-    NSDictionary *parameters = @{ @"name": name, @"nonce" : nonce };
+    NSDictionary *parameters = @{
+                                 @"app_id" : appUUID,
+                                 @"user_id" : name,
+                                 @"nonce" : nonce
+                                 };
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:URL];
     request.HTTPMethod = @"POST";
     request.HTTPBody = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:nil];
