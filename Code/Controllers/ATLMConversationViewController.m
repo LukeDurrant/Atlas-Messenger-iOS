@@ -128,7 +128,7 @@ static ATLMDateProximity ATLMProximityToDate(NSDate *date)
     return ATLMDateProximityOther;
 }
 
-@interface ATLMConversationViewController () <ATLMConversationDetailViewControllerDelegate, ATLParticipantTableViewControllerDelegate>
+@interface ATLMConversationViewController () <ATLMConversationDetailViewControllerDelegate, ATLParticipantTableViewControllerDelegate, UIViewControllerPreviewingDelegate>
 
 @property (nonatomic) ATLMParticipantDataSource *participantDataSource;
 
@@ -156,6 +156,14 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
     
     self.participantDataSource = [ATLMParticipantDataSource participantDataSourceWithPersistenceManager:self.applicationController.persistenceManager];
     self.participantDataSource.excludedIdentifiers = [NSSet setWithObject:self.layerClient.authenticatedUserID];
+    
+    // Register for 3D Touch Previewing if available
+    if ([self.traitCollection respondsToSelector:@selector(forceTouchCapability)] &&
+        (self.traitCollection.forceTouchCapability == UIForceTouchCapabilityAvailable))
+    {
+        [self registerForPreviewingWithDelegate:self sourceView:self.collectionView];
+    }
+
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -244,11 +252,43 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
     }
 }
 
-- (void)presentMediaViewControllerWithMessage:(LYRMessage *)message
+- (UIViewController*)viewControllerWithMessage:(LYRMessage *)message
 {
     ATLMMediaViewController *imageViewController = [[ATLMMediaViewController alloc] initWithMessage:message];
-    UINavigationController *controller = [[UINavigationController alloc] initWithRootViewController:imageViewController];
-    [self.navigationController presentViewController:controller animated:YES completion:nil];
+    return imageViewController;
+}
+
+- (void)presentMediaViewControllerWithMessage:(LYRMessage *)message
+{
+    UIViewController *imageViewController = [self viewControllerWithMessage:message];
+
+    [self.navigationController pushViewController:imageViewController animated:YES];
+}
+
+#pragma mark -
+#pragma mark === UIViewControllerPreviewingDelegate Methods ===
+#pragma mark -
+
+- (UIViewController *)previewingContext:(id<UIViewControllerPreviewing>)previewingContext
+              viewControllerForLocation:(CGPoint)location {
+    
+    UICollectionView *collectionView = (UICollectionView *)[previewingContext sourceView];
+    NSIndexPath *indexPath = [collectionView indexPathForItemAtPoint:location];
+
+    if (indexPath) {
+        LYRMessage *message = [self messageAtIndexPath:indexPath];
+        UICollectionViewCell *cell =  [self.collectionView cellForItemAtIndexPath:indexPath];
+        if (cell && message) {
+            previewingContext.sourceRect = cell.frame;
+            UIViewController *viewController = [self viewControllerWithMessage:message];
+            return viewController;
+        }
+    }
+    return nil;
+}
+
+- (void)previewingContext:(id<UIViewControllerPreviewing>)previewingContext commitViewController:(UIViewController *)viewControllerToCommit {
+    [self showDetailViewController:viewControllerToCommit sender:self];
 }
 
 #pragma mark - ATLConversationViewControllerDataSource

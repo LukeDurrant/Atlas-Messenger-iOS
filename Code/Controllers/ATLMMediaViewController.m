@@ -45,6 +45,8 @@ static NSString *ATLMMediaViewControllerSymLinkedMediaTempPath = @"com.layer.atl
 @property (nonatomic) BOOL viewControllerConfigured;
 @property (nonatomic) LYRMessagePart *observedMessagePart;
 
+@property (nonatomic) NSArray<id<UIPreviewActionItem>> *previewActions;
+
 @end
 
 @implementation ATLMMediaViewController
@@ -100,8 +102,6 @@ static NSString *ATLMMediaViewControllerSymLinkedMediaTempPath = @"com.layer.atl
     UIBarButtonItem *shareBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(share:)];
     self.navigationItem.rightBarButtonItem = shareBarButtonItem;
     self.navigationItem.rightBarButtonItem.enabled = NO;
-    UIBarButtonItem *doneButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done:)];
-    self.navigationItem.leftBarButtonItem = doneButtonItem;
     
     if (ATLMessagePartForMIMEType(self.message, ATLMIMETypeImageJPEG) || ATLMessagePartForMIMEType(self.message, ATLMIMETypeImagePNG) || ATLMessagePartForMIMEType(self.message, ATLMIMETypeImageGIF)) {
         self.title = @"Image";
@@ -147,6 +147,7 @@ static NSString *ATLMMediaViewControllerSymLinkedMediaTempPath = @"com.layer.atl
 {
     [super viewWillDisappear:animated];
     [self.progressView removeFromSuperview];
+    [self done:nil];
 }
 
 - (void)viewDidLayoutSubviews
@@ -230,7 +231,6 @@ static NSString *ATLMMediaViewControllerSymLinkedMediaTempPath = @"com.layer.atl
     if (self.moviePlayerController) {
         [self.moviePlayerController pause];
     }
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - Helpers
@@ -584,4 +584,23 @@ static NSString *ATLMMediaViewControllerSymLinkedMediaTempPath = @"com.layer.atl
     }
 }
 
+#pragma mark - UIPreviewActionItem
+
+- (NSArray<id<UIPreviewActionItem>> *)previewActionItems {
+    if (_previewActions == nil) {
+        UIPreviewAction *closeAction = [UIPreviewAction
+                                        actionWithTitle:@"Close"
+                                        style:UIPreviewActionStyleDefault
+                                        handler:^(UIPreviewAction * _Nonnull action,
+                                                  UIViewController * _Nonnull previewViewController) {
+                                            // ... code to handle action here
+                                            // Think of something goo do put here
+                                        }];
+        
+        
+        
+        _previewActions = @[closeAction];
+    }
+    return _previewActions;
+}
 @end
